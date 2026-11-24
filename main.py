@@ -1,58 +1,33 @@
-"""One-line office joke for make.fun's "Make the AI Judge Laugh: Office Jokes".
-
-The program writes a single joke about office life to /output/entry.txt.
-The joke is a fixed string: no randomness, no timestamps, no input of any
-kind, so every run produces byte-identical output.
-"""
+"""Office Jokes entry: write one office joke to /output/entry.txt."""
 
 import os
-import sys
 
-JOKE = (
-    "My out-of-office reply starts with 'per my last email,' "
-    "so even my absence sounds passive-aggressive."
-)
+JOKE = "My out-of-office reply starts with 'per my last email,' so even my absence sounds passive-aggressive."
 
-OUT_DIR = "/output"
-OUT_PATH = os.path.join(OUT_DIR, "entry.txt")
-
-MIN_CHARS = 1
-MAX_CHARS = 199
+OUTPUT_PATH = "/output/entry.txt"
 
 
-def check_joke(text):
-    """The gate wants 1 to 199 UTF-8 characters, not only white space."""
-    if not isinstance(text, str):
-        raise TypeError("the joke must be text")
+def validate(text: str) -> None:
+    """Gate check, mirroring the scorer: one line, 1-199 chars, not blank."""
     if not text.strip():
-        raise ValueError("the joke must not be only white space")
-    if len(text) < MIN_CHARS or len(text) > MAX_CHARS:
-        raise ValueError(
-            "the joke is %d characters, the gate allows %d to %d"
-            % (len(text), MIN_CHARS, MAX_CHARS)
-        )
-    text.encode("utf-8")
-    return text
+        raise ValueError("entry must not be blank")
+    if "\n" in text or "\r" in text:
+        raise ValueError("entry must be a single line")
+    if not 1 <= len(text) <= 199:
+        raise ValueError(f"entry must be 1-199 characters, got {len(text)}")
 
 
-def write_entry(text):
-    """Write the joke to the output path, then read it back to prove it."""
-    os.makedirs(OUT_DIR, exist_ok=True)
-    with open(OUT_PATH, "w", encoding="utf-8", newline="\n") as handle:
-        handle.write(text)
-    with open(OUT_PATH, "r", encoding="utf-8") as handle:
+def main() -> None:
+    validate(JOKE)
+    os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
+    with open(OUTPUT_PATH, "w", encoding="utf-8") as handle:
+        handle.write(JOKE)
+    with open(OUTPUT_PATH, "r", encoding="utf-8") as handle:
         written = handle.read()
-    if written != text:
-        raise ValueError("what was written does not match the joke")
-    return written
-
-
-def main():
-    joke = check_joke(JOKE)
-    written = write_entry(joke)
-    print("wrote %s (%d characters)" % (OUT_PATH, len(written)))
-    return 0
+    if written != JOKE:
+        raise ValueError("read-back mismatch: output differs from the joke")
+    print(f"wrote {len(written)} characters to {OUTPUT_PATH}")
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()
